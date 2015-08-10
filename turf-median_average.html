@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turf - median & average</title>
+  <style>
+    #mapDiv { width: 980px; height: 600px; }
+    .map-box{ padding: 10px; font-size: 16px; }
+  </style>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+  <div id="mapDiv"></div>
+
+
+<script>
+var map, infoWindow = new google.maps.InfoWindow({ content: "" });
+google.maps.InfoWindow.prototype.isOpen = function(){
+  var map = this.getMap();
+  return (map !== null && typeof map !== "undefined");
+}
+
+function initMap() {
+
+  var polygons = {type:"FeatureCollection",features:[{type:"Feature",properties:{gtype: "box"},geometry:{type:"Polygon",coordinates:[[[121.51183,25.05127],[121.51183,25.06538],[121.52831,25.06538],[121.52831,25.05127],[121.51183,25.05127]]]}},{type:"Feature",properties:{gtype: "box"},geometry:{type:"Polygon",coordinates:[[[121.53290,25.04439],[121.53290,25.06453],[121.54655,25.06453],[121.54655,25.04439],[121.53290,25.04439]]]}}]};
+
+  // points
+  var points1 = turf.random('points', 25, { bbox: [121.51, 25.04, 121.55, 25.07]});
+  for (var i = 0; i < points1.features.length; i++) { points1.features[i].properties.point = ~~(Math.random() * 10 + 1); }
+
+
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(25.06164, 121.52876),
+      zoom: 14,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  map.data.setStyle(function(feature) {
+    // points
+    if( feature.getProperty('point') ){
+      return { icon: new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_spin&chld=0.7|0|80e516|13|b|" + feature.getProperty('point')) };
+    }
+  });
+
+  // 載入 GeoJSON 資料
+  // map.data.addGeoJson(data);
+  // map.data.addGeoJson(points1);
+
+  var aggregated_avg = turf.average(polygons, points1, 'point', 'average');
+  var aggregated_median = turf.median(polygons, points1, 'point', 'median');
+  var resultFeatures = points1.features.concat(aggregated_avg.features);
+  resultFeatures = points1.features.concat(aggregated_median.features);
+
+  var result = {
+    "type": "FeatureCollection",
+    "features": resultFeatures
+  };
+
+  map.data.addGeoJson(result);
+
+  map.data.addListener('click', function(e) {
+
+    if( !!e.feature.getProperty('gtype') ){
+      var str = [];
+      str.push('<div class="map-box">average: '+ e.feature.getProperty('average') + '</div>');
+      str.push('<div class="map-box">median: '+ e.feature.getProperty('median') + '</div>');
+      infoWindow.setContent(str.join(''));
+    }
+    else if( !!e.feature.getProperty('point') ){
+      infoWindow.setContent('<div class="map-box">' + e.feature.getProperty('point') + "</div>");
+    }
+    var anchor = new google.maps.MVCObject();
+    anchor.set("position", e.latLng);
+    infoWindow.open(map,anchor);
+  });
+}
+
+</script>
+
+
+</body>
+</html>

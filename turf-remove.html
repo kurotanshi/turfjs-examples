@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Turf - filter</title>
+  <title>Turf - remove</title>
   <style>
     html, body{ font-size: 16px; }
     .filter-btn{ font-size: 150%; margin-bottom: 0.5em; }
@@ -15,7 +15,7 @@
 </head>
 <body onload="initMap()">
 
-  <button class="filter-btn">Filter</button>
+  <button class="filter-btn">Remove</button>
   <div id="mapDiv"></div>
 
 <script>
@@ -29,7 +29,7 @@ $('.filter-btn').on('click', function(e){
   e.preventDefault();
   var key = "point";
   var value = "甲";
-  var filtered = turf.filter(points1, key, value);
+  var filtered = turf.remove(points1, key, value);
   // clear
   dataMap.setMap(null);
 

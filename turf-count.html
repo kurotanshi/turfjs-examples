@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Turf - random</title>
+  <title>Turf - count</title>
   <style>
     #mapDiv { width: 980px; height: 600px; }
     .map-box{ padding: 10px; }
@@ -23,20 +23,17 @@ google.maps.InfoWindow.prototype.isOpen = function(){
 
 function initMap() {
 
-  var data={type:"FeatureCollection",features:[{type:"Feature",properties:{gtype: "box"},geometry:{type:"Polygon",coordinates:[[[121.51183,25.05127],[121.51183,25.06538],[121.52831,25.06538],[121.52831,25.05127],[121.51183,25.05127]]]}},{type:"Feature",properties:{gtype: "box"},geometry:{type:"Polygon",coordinates:[[[121.53290,25.04439],[121.53290,25.06453],[121.54655,25.06453],[121.54655,25.04439],[121.53290,25.04439]]]}}]};
+  var polygons = {type:"FeatureCollection",features:[{type:"Feature",properties:{gtype: "box"},geometry:{type:"Polygon",coordinates:[[[121.51183,25.05127],[121.51183,25.06538],[121.52831,25.06538],[121.52831,25.05127],[121.51183,25.05127]]]}},{type:"Feature",properties:{gtype: "box"},geometry:{type:"Polygon",coordinates:[[[121.53290,25.04439],[121.53290,25.06453],[121.54655,25.06453],[121.54655,25.04439],[121.53290,25.04439]]]}}]};
 
-  // points1
-  var points1 = turf.random('points', 10, { bbox: [121.5118360519409, 25.051274198147734, 121.5283155441284, 25.06538619563029]});
-  for (var i = 0; i < points1.features.length; i++) { points1.features[i].properties.point = ~~(Math.random() * 100 +1); }
+  // points
+  var points1 = turf.random('points', 25, { bbox: [121.51, 25.04, 121.55, 25.07]});
+  for (var i = 0; i < points1.features.length; i++) { points1.features[i].properties.point = ~~(Math.random() * 100 + 1); }
 
-  // points2
-  var points2 = turf.random('points', 10, { bbox: [121.5329074859619, 25.04439255221216, 121.54655456542969, 25.06453096931927]});
-  for (var i = 0; i < points2.features.length; i++) { points2.features[i].properties.point = ~~(Math.random() * 100 + 1); }
 
   // 地圖初始設定
   var mapOptions = {
-      center: new google.maps.LatLng(25.05464, 121.52876),
-      zoom: 15,
+      center: new google.maps.LatLng(25.06164, 121.52876),
+      zoom: 14,
       mapTypeId: google.maps.MapTypeId.ROADMAP
   };
 
@@ -48,19 +45,27 @@ function initMap() {
   map.data.setStyle(function(feature) {
     // points
     if( feature.getProperty('point') ){
-      return { icon: new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_spin&chld=1|0|80e516|15|b|" + feature.getProperty('point')) };
+      return { icon: new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_spin&chld=0.7|0|80e516|13|b|" + feature.getProperty('point')) };
     }
   });
 
   // 載入 GeoJSON 資料
-  map.data.addGeoJson(data);
-  map.data.addGeoJson(points1);
-  map.data.addGeoJson(points2);
+  // map.data.addGeoJson(data);
+  // map.data.addGeoJson(points1);
+
+  var counted = turf.count(polygons, points1, 'pt_count');
+  var resultFeatures = points1.features.concat(counted.features);
+  var result = {
+    "type": "FeatureCollection",
+    "features": resultFeatures
+  };
+
+  map.data.addGeoJson(result);
 
   map.data.addListener('click', function(e) {
 
     if( !!e.feature.getProperty('gtype') ){
-      infoWindow.setContent('<div class="map-box">box</div>');
+      infoWindow.setContent('<div class="map-box">count: '+ e.feature.getProperty('pt_count') +'</div>');
     }
     else if( !!e.feature.getProperty('point') ){
       infoWindow.setContent('<div class="map-box">' + e.feature.getProperty('point') + "</div>");
