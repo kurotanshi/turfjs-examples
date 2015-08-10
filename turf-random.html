@@ -33,43 +33,42 @@ function initMap() {
   var points2 = turf.random('points', 10, { bbox: [121.5329074859619, 25.04439255221216, 121.54655456542969, 25.06453096931927]});
   for (var i = 0; i < points2.features.length; i++) { points2.features[i].properties.point = ~~(Math.random() * 100 + 1); }
 
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(25.05464, 121.52876),
+      zoom: 15,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
 
-    // 地圖初始設定
-    var mapOptions = {
-        center: new google.maps.LatLng(25.05464, 121.52876),
-        zoom: 15,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-    };
+  var mapElement = document.getElementById("mapDiv");
 
-    var mapElement = document.getElementById("mapDiv");
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
 
-    // Google 地圖初始化
-    map = new google.maps.Map(mapElement, mapOptions);
+  map.data.setStyle(function(feature) {
+    // points
+    if( feature.getProperty('point') ){
+      return { icon: new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_spin&chld=1|0|80e516|15|b|" + feature.getProperty('point')) };
+    }
+  });
 
-    map.data.setStyle(function(feature) {
-      // points
-      if( feature.getProperty('point') ){
-        return { icon: new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_spin&chld=1|0|80e516|15|b|" + feature.getProperty('point')) };
-      }
-    });
+  // 載入 GeoJSON 資料
+  map.data.addGeoJson(data);
+  map.data.addGeoJson(points1);
+  map.data.addGeoJson(points2);
 
-    // 載入 GeoJSON 資料
-    map.data.addGeoJson(data);
-    map.data.addGeoJson(points1);
-    map.data.addGeoJson(points2);
+  map.data.addListener('click', function(e) {
 
-    map.data.addListener('click', function(e) {
-
-      if( !!e.feature.getProperty('gtype') ){
-        infoWindow.setContent('<div class="map-box">box</div>');
-      }
-      else if( !!e.feature.getProperty('point') ){
-        infoWindow.setContent('<div class="map-box">' + e.feature.getProperty('point') + "</div>");
-      }
-      var anchor = new google.maps.MVCObject();
-      anchor.set("position", e.latLng);
-      infoWindow.open(map,anchor);
-    });
+    if( !!e.feature.getProperty('gtype') ){
+      infoWindow.setContent('<div class="map-box">box</div>');
+    }
+    else if( !!e.feature.getProperty('point') ){
+      infoWindow.setContent('<div class="map-box">' + e.feature.getProperty('point') + "</div>");
+    }
+    var anchor = new google.maps.MVCObject();
+    anchor.set("position", e.latLng);
+    infoWindow.open(map,anchor);
+  });
 }
 
 </script>
