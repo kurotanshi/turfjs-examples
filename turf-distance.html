@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Turf - along</title>
+  <title>Turf - distance</title>
   <style>
     #mapDiv { width: 600px; height: 400px; }
     .map-box{ padding: 10px; font-size: 16px; }
@@ -16,8 +16,6 @@
 </head>
 <body onload="initMap()">
   <div class="length"></div>
-  <div class="along">距離中研院 <input type="text" class="along" value="0"> 公尺位置</div>
-
   <div id="mapDiv"></div>
 
 <script>
@@ -27,42 +25,24 @@ var styles=[{featureType:"poi",stylers:[{visibility:"off"}]},{stylers:[{saturati
 
 
 function initMap() {
-  var line = {
+  var point1 = {
     "type": "Feature",
-    "properties": { "line": "on" },
+    "properties": {},
     "geometry": {
-      "type": "LineString",
-      "coordinates": [
-        [121.6164207458496,25.04330389487308],
-        [121.61517620086669,25.04583112030013],
-        [121.61590576171876,25.048241656016565],
-        [121.6155195236206,25.05049663039367],
-        [121.61667823791504,25.05512308589586]
-      ]
+      "type": "Point",
+      "coordinates": [121.6164207458496,25.04330389487308]
     }
   };
-
-  var length = turf.lineDistance(line, 'kilometers');
-  $('.length').text( '總長' + length + ' 公里');
-
-  $('input.along').on('change', function(){
-    var meter = parseInt($(this).val(), 10);
-    var along = turf.along(line, meter/1000, 'kilometers');
-
-    var result = {
-      "type": "FeatureCollection",
-      "features": [line, along]
-    };
-
-    // clear
-    dataMap.setMap(null);
-    dataMap = new google.maps.Data();
-    dataMap.setStyle(function(feature){ if( feature.getProperty('line') ){ return { strokeWeight: 5, strokeColor: '#e55', strokeOpacity: 1 }; } });
-
-    // add new data
-    dataMap.addGeoJson(result);
-    dataMap.setMap(map);
-  });
+  var point2 = {
+    "type": "Feature",
+    "properties": {},
+    "geometry": {
+      "type": "Point",
+      "coordinates": [121.61667823791504,25.05512308589586]
+    }
+  };
+  var distance = turf.distance(point1, point2, 'kilometers');
+  $('.length').text('兩點 (直線) 距離約 ' + distance + ' 公里');
 
   // 地圖初始設定
   var mapOptions = {
@@ -77,7 +57,9 @@ function initMap() {
   // Google 地圖初始化
   map = new google.maps.Map(mapElement, mapOptions);
 
-  dataMap.addGeoJson(line);
+  dataMap.addGeoJson(point1);
+  dataMap.addGeoJson(point2);
+
   dataMap.setStyle(function(feature){
     if( feature.getProperty('line') ){ return { strokeWeight: 5, strokeColor: '#e55', strokeOpacity: 1 }; }
   });
