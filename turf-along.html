@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turf - lineDistance</title>
+  <style>
+    #mapDiv { width: 600px; height: 400px; }
+    .map-box{ padding: 10px; font-size: 16px; }
+    .length, .along{ font-size: 20px; margin-bottom: 10px; }
+    input.along{ width: 50px; }
+  </style>
+
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+  <div class="length"></div>
+  <div class="along">距離中研院 <input type="text" class="along" value="0"> 公尺位置</div>
+
+  <div id="mapDiv"></div>
+
+<script>
+var map, infoWindow = new google.maps.InfoWindow({ content: "" });
+var dataMap = new google.maps.Data();
+var styles=[{featureType:"poi",stylers:[{visibility:"off"}]},{stylers:[{saturation:-70},{lightness:37},{gamma:1.15}]},{elementType:"labels",stylers:[{gamma:.26},{visibility:"on"}]},{featureType:"road",stylers:[{lightness:0},{saturation:0},{hue:"#ffffff"},{gamma:0}]},{featureType:"road",elementType:"labels.text.stroke",stylers:[{visibility:"off"}]},{featureType:"road.arterial",elementType:"geometry",stylers:[{lightness:20}]},{featureType:"road.highway",elementType:"geometry",stylers:[{lightness:50},{saturation:0},{hue:"#ffffff"}]},{featureType:"administrative.province",stylers:[{visibility:"on"},{lightness:-50}]},{featureType:"administrative.province",elementType:"labels.text.stroke",stylers:[{visibility:"off"}]},{featureType:"administrative.province",elementType:"labels.text",stylers:[{lightness:20}]}];
+
+
+function initMap() {
+  var line = {
+    "type": "Feature",
+    "properties": { "line": "on" },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [121.6164207458496,25.04330389487308],
+        [121.61517620086669,25.04583112030013],
+        [121.61590576171876,25.048241656016565],
+        [121.6155195236206,25.05049663039367],
+        [121.61667823791504,25.05512308589586]
+      ]
+    }
+  };
+
+  var length = turf.lineDistance(line, 'kilometers');
+  $('.length').text( '總長' + length + ' 公里');
+
+  $('input.along').on('change', function(){
+    var meter = parseInt($(this).val(), 10);
+    var along = turf.along(line, meter/1000, 'kilometers');
+
+    var result = {
+      "type": "FeatureCollection",
+      "features": [line, along]
+    };
+
+    // clear
+    dataMap.setMap(null);
+    dataMap = new google.maps.Data();
+    dataMap.setStyle(function(feature){ if( feature.getProperty('line') ){ return { strokeWeight: 5, strokeColor: '#e55', strokeOpacity: 1 }; } });
+
+    // add new data
+    dataMap.addGeoJson(result);
+    dataMap.setMap(map);
+  });
+
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(25.04880, 121.615262),
+      zoom: 15,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      styles: styles
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  dataMap.addGeoJson(line);
+  dataMap.setStyle(function(feature){
+    if( feature.getProperty('line') ){ return { strokeWeight: 5, strokeColor: '#e55', strokeOpacity: 1 }; }
+  });
+  dataMap.setMap(map);
+}
+
+</script>
+
+
+</body>
+</html>
