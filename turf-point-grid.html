@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turf - point-grid</title>
+  <style>
+    #mapDiv { width: 980px; height: 600px; }
+    .map-box{ padding: 10px; }
+  </style>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+  <div id="mapDiv"></div>
+
+
+<script>
+var map;
+
+function initMap() {
+
+  var bbox = [121.51083, 25.05127, 121.5441, 25.06838];
+  var data = turf.bboxPolygon(bbox);
+  var center = turf.center(data);
+  var pointGrid = turf.pointGrid(bbox, 0.1, 'kilometers');
+
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(center.geometry.coordinates[1], center.geometry.coordinates[0]),
+      zoom: 15,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  // 載入 GeoJSON 資料
+  map.data.addGeoJson(pointGrid);
+}
+
+</script>
+
+
+</body>
+</html>
