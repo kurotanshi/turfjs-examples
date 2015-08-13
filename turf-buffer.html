@@ -17,25 +17,17 @@
   <div id="mapDiv"></div>
 
 <script>
-var map;
+var map, marker;
 var dataMap = new google.maps.Data();
 
 // 台北火車站
 var point = turf.point([121.51709318161011, 25.047833423462535]);
-// turf.buffer
-var buffered = turf.buffer(point, 3, "kilometers");
 
+// turf.buffer
+// var buffered = turf.buffer(point, 3, "kilometers");
 $('#range').on('change', function(e){
   $('.range-text').text( $(this).val() + ' Km');
-
-  buffered = turf.buffer(point, parseInt($(this).val(), 10), "kilometers");
-
-  dataMap.setMap(null);
-  dataMap = new google.maps.Data();
-
-  dataMap.addGeoJson(point);
-  dataMap.addGeoJson(buffered);
-  dataMap.setMap(map);
+  dataMapReload(marker.position, $(this).val());
 });
 
 
@@ -52,8 +44,30 @@ function initMap() {
   // Google 地圖初始化
   map = new google.maps.Map(mapElement, mapOptions);
 
+  marker = new google.maps.Marker({
+    position: new google.maps.LatLng(point.geometry.coordinates[1], point.geometry.coordinates[0]),
+    map: map,
+    draggable: true,
+    title: '台北火車站'
+  });
+
+   google.maps.event.addListener(marker, 'dragend', function(e) {
+    dataMapReload(e.latLng, $('#range').val());
+    map.panTo(e.latLng);
+  });
+
+   console.log( marker  );
   // 載入 GeoJSON 資料
-  dataMap.addGeoJson(point);
+  dataMapReload(marker.position, $('#range').val());
+}
+
+function dataMapReload(point, unit){
+  unit = parseInt(unit, 10);
+  var turfPoint = turf.point([point.lng(), point.lat()]);
+  var buffered = turf.buffer(turfPoint, unit, "kilometers");
+
+  dataMap.setMap(null);
+  dataMap = new google.maps.Data();
   dataMap.addGeoJson(buffered);
   dataMap.setMap(map);
 }
