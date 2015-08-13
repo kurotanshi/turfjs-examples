@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turf - buffer</title>
+  <style>
+    #mapDiv { width: 980px; height: 600px; }
+    #range { width: 300px; }
+    .map-box{ padding: 10px; }
+  </style>
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+  <p>
+    <h2>高雄氣爆影響範圍示意</h2>
+    <input type="range" id="range" min="0.25" max="5" step="0.25" value="0.5" /> <span class="range-text">0.25 Km</span>
+  </p>
+  <div id="mapDiv"></div>
+
+<script>
+var map, marker;
+var dataMap = new google.maps.Data();
+
+var points = {
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -239.67114686965942,
+          22.62189420261141
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -239.67745542526245,
+          22.612366806763518
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -239.67320680618283,
+          22.61191121828706
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -239.6821117401123,
+          22.608107986050182
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -239.6752667427063,
+          22.605077210092677
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -239.68421459197998,
+          22.60565167602243
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -239.69099521636963,
+          22.60442350456582
+        ]
+      }
+    }
+  ]
+};
+
+var point = turf.center(points);
+// turf.buffer
+var buffered = turf.buffer(points, 0.5, "kilometers");
+
+$('#range').on('change', function(e){
+  $('.range-text').text( $(this).val() + ' Km');
+  buffered = turf.buffer(points, $(this).val(), "kilometers");
+
+  dataMap.setMap(null);
+  dataMap = new google.maps.Data();
+  dataMap.addGeoJson(points);
+  dataMap.addGeoJson(buffered);
+  dataMap.setMap(map);
+});
+
+function initMap() {
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(point.geometry.coordinates[1], point.geometry.coordinates[0]),
+      zoom: 15,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  dataMap.addGeoJson(points);
+  dataMap.addGeoJson(buffered);
+  dataMap.setMap(map);
+}
+
+
+</script>
+
+
+</body>
+</html>
