@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turf - buffer</title>
+  <style>
+    #mapDiv { width: 980px; height: 600px; }
+    #range { width: 300px; }
+    .map-box{ padding: 10px; }
+  </style>
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+  <p><input type="range" id="range" min="1" max="10" step="1" value="3" /> <span class="range-text">3 Km</span></p>
+  <div id="mapDiv"></div>
+
+<script>
+var map, marker;
+var dataMap = new google.maps.Data();
+
+// 台北火車站
+var point = turf.point([121.51709318161011, 25.047833423462535]);
+
+// turf.buffer
+// var buffered = turf.buffer(point, 3, "kilometers");
+$('#range').on('change', function(e){
+  $('.range-text').text( $(this).val() + ' Km');
+  dataMapReload(marker.position, $(this).val());
+});
+
+
+function initMap() {
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(point.geometry.coordinates[1], point.geometry.coordinates[0]),
+      zoom: 14,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  marker = new google.maps.Marker({
+    position: new google.maps.LatLng(point.geometry.coordinates[1], point.geometry.coordinates[0]),
+    map: map,
+    draggable: true,
+    title: '台北火車站'
+  });
+
+   google.maps.event.addListener(marker, 'dragend', function(e) {
+    dataMapReload(e.latLng, $('#range').val());
+    map.panTo(e.latLng);
+  });
+
+  // 載入 GeoJSON 資料
+  dataMapReload(marker.position, $('#range').val());
+}
+
+function dataMapReload(point, unit){
+  unit = parseInt(unit, 10);
+  var turfPoint = turf.point([point.lng(), point.lat()]);
+  var buffered = turf.buffer(turfPoint, unit, "kilometers");
+
+  dataMap.setMap(null);
+  dataMap = new google.maps.Data();
+  dataMap.addGeoJson(buffered);
+  dataMap.setMap(map);
+}
+
+</script>
+
+
+</body>
+</html>

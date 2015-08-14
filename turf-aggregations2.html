@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turf - aggregation</title>
+  <style>
+    #mapDiv { margin-top: 1em; width: 800px; height: 800px; }
+    .map-box{ padding: 6px; font-size: 14px; }
+    button{ font-size: 16px; padding: 6px; }
+  </style>
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+
+  <button class="btn" data-base="0.02" data-maptype="pop_sum">Sum</button>
+  <button class="btn" data-base="0.1" data-maptype="point_count">Count</button>
+  <button class="btn" data-base="0.1" data-maptype="pop_avg">Average</button>
+  <button class="btn" data-base="0.075" data-maptype="pop_max">Max</button>
+  <button class="btn" data-base="0.08" data-maptype="pop_min">Min</button>
+  <button class="btn" data-base="" data-maptype="">Reset</button>
+
+  <div id="mapDiv"></div>
+
+
+<script>
+var map, infoWindow = new google.maps.InfoWindow({ content: "" });
+google.maps.InfoWindow.prototype.isOpen = function(){
+  var map = this.getMap();
+  return (map !== null && typeof map !== "undefined");
+}
+
+function setMapStyle(v, base){
+  v = v || '';
+  base = base || 0;
+
+  map.data.setStyle(function(feature){
+    // points
+    if( feature.getProperty('point') ){ return { icon: new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_spin&chld=0.7|0|80D29B|11|b|" + feature.getProperty('point')) }; }
+    // areas
+    if( v === '' ){
+      if( feature.getProperty('AREA')){
+        return { fillOpacity: 0.15, fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 };
+      }
+    }else{
+      if( feature.getProperty('AREA') ){
+        return { fillOpacity: (base * feature.getProperty(v) > 1) ? 1 : base * feature.getProperty(v), fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 };
+      }
+    }
+  });
+}
+
+
+function initMap() {
+  var polygons;
+  var styles=[{featureType:"poi",stylers:[{visibility:"off"}]},{stylers:[{saturation:-70},{lightness:37},{gamma:1.15}]},{elementType:"labels",stylers:[{gamma:.26},{visibility:"off"}]},{featureType:"road",stylers:[{lightness:0},{saturation:0},{hue:"#ffffff"},{gamma:0}]},{featureType:"road",elementType:"labels.text.stroke",stylers:[{visibility:"off"}]},{featureType:"road.arterial",elementType:"geometry",stylers:[{lightness:20}]},{featureType:"road.highway",elementType:"geometry",stylers:[{lightness:50},{saturation:0},{hue:"#ffffff"}]},{featureType:"administrative.province",stylers:[{visibility:"on"},{lightness:-50}]},{featureType:"administrative.province",elementType:"labels.text.stroke",stylers:[{visibility:"off"}]},{featureType:"administrative.province",elementType:"labels.text",stylers:[{lightness:20}]}];
+
+  // points
+  var points1 = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[121.59986590418652,24.99588950379318]},"properties":{"point":4}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.58025729068072,24.99377150545891]},"properties":{"point":6}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.59348589008432,25.08304746470683]},"properties":{"point":4}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.57453956990476,25.022247614833308]},"properties":{"point":3}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.59314469559793,25.116653653790486]},"properties":{"point":10}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.5337596776409,25.039087957506762]},"properties":{"point":5}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.61863984432469,24.998250683783567]},"properties":{"point":9}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.58125621797608,25.099338168942616]},"properties":{"point":4}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.5119197975305,25.03947934331848]},"properties":{"point":6}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.5635931659035,25.11145588298499]},"properties":{"point":4}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.49885587323688,25.09807993923867]},"properties":{"point":1}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.50380924539618,25.026500358481936]},"properties":{"point":1}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.56102822637115,25.034260101661157]},"properties":{"point":10}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.59084799992485,25.004956802771424]},"properties":{"point":6}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.5623543008415,24.991343050027243]},"properties":{"point":5}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.51615916829239,25.06327831976013]},"properties":{"point":3}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.4888062847319,25.120401131148988]},"properties":{"point":5}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.58156742652383,25.118175456504186]},"properties":{"point":3}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.58725693623079,25.107183075134735]},"properties":{"point":3}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.5199850636758,25.090443323485278]},"properties":{"point":5}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.57166122821269,25.071059380624405]},"properties":{"point":3}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.61240056726815,25.051688300613602]},"properties":{"point":8}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.58132413922854,25.13993879537026]},"properties":{"point":2}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.55080560286062,25.08670130760016]},"properties":{"point":1}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.50692295059321,25.0321498093387]},"properties":{"point":10}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.56732833815715,25.131421730966615]},"properties":{"point":2}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.48524535128932,25.056134681036077]},"properties":{"point":7}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.50482153081288,25.001445953369664]},"properties":{"point":5}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.56327259841488,25.051469462093287]},"properties":{"point":6}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.60350922703591,24.998856659328002]},"properties":{"point":9}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.5062800039021,25.110201983068738]},"properties":{"point":6}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.48202646575216,24.98578387217774]},"properties":{"point":10}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.55304494507678,25.08579092387453]},"properties":{"point":3}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.61929179602349,25.011555926550425]},"properties":{"point":9}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.60404557959932,25.09803240349036]},"properties":{"point":10}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.55613286673153,25.11655840272827]},"properties":{"point":1}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.48570141558822,25.056276674733876]},"properties":{"point":1}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.49244086437851,25.019991177897783]},"properties":{"point":6}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.48524983067101,24.98996603216291]},"properties":{"point":4}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.49686006959614,24.980598701368045]},"properties":{"point":8}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.49677067033264,25.07506593469458]},"properties":{"point":1}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.51162412121684,24.98914572774491]},"properties":{"point":5}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.51916392129701,25.047315014550165]},"properties":{"point":7}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.56513126512274,25.058920535297723]},"properties":{"point":9}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.48155355032365,24.98838555616817]},"properties":{"point":3}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.61920614958139,25.00586999219385]},"properties":{"point":10}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.52063342413813,25.099024550084856]},"properties":{"point":9}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.61672627697439,25.093105477854692]},"properties":{"point":6}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.59788933924673,25.14403653466296]},"properties":{"point":1}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.61839671037151,25.145466053581192]},"properties":{"point":10}}]};
+
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(25.06214, 121.55976),
+      zoom: 12,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      styles: styles
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  // set styles
+  setMapStyle();
+
+  // 載入 GeoJSON 資料
+  var aggregations = [
+    {
+      aggregation: 'sum',
+      inField: 'point',
+      outField: 'pop_sum'
+    },
+    {
+      aggregation: 'average',
+      inField: 'point',
+      outField: 'pop_avg'
+    },
+    {
+      aggregation: 'median',
+      inField: 'point',
+      outField: 'pop_median'
+    },
+    {
+      aggregation: 'min',
+      inField: 'point',
+      outField: 'pop_min'
+    },
+    {
+      aggregation: 'max',
+      inField: 'point',
+      outField: 'pop_max'
+    },
+    {
+      aggregation: 'deviation',
+      inField: 'point',
+      outField: 'pop_deviation'
+    },
+    {
+      aggregation: 'variance',
+      inField: 'point',
+      outField: 'pop_variance'
+    },
+    {
+      aggregation: 'count',
+      inField: '',
+      outField: 'point_count'
+    }
+  ];
+
+  // 台北市區界圖
+  $.get('taipei.json', function(data){
+
+    polygons = data;
+    var aggregated = turf.aggregate(polygons, points1, aggregations);
+    var result = turf.featurecollection(points1.features.concat(aggregated.features));
+
+    map.data.addGeoJson(result);
+
+    // click
+    map.data.addListener('click', function(e) {
+      if( e.feature.getProperty('AREA') ){
+        var str = [];
+        str.push('<div class="map-box"><strong>'+ e.feature.getProperty('PTNAME') + '</strong></div>');
+        str.push('<div class="map-box">count: '+ e.feature.getProperty('point_count') + '</div>');
+        str.push('<div class="map-box">sum: '+ e.feature.getProperty('pop_sum') + '</div>');
+        str.push('<div class="map-box">avg: '+ e.feature.getProperty('pop_avg') + '</div>');
+        str.push('<div class="map-box">median: '+ e.feature.getProperty('pop_median') + '</div>');
+        str.push('<div class="map-box">min: '+ e.feature.getProperty('pop_min') + '</div>');
+        str.push('<div class="map-box">max: '+ e.feature.getProperty('pop_max') + '</div>');
+
+        infoWindow.setContent(str.join(''));
+      }
+      else if( e.feature.getProperty('point') ){
+        infoWindow.setContent('<div class="map-box">' + e.feature.getProperty('point') + "</div>");
+      }
+      var anchor = new google.maps.MVCObject();
+      anchor.set("position", e.latLng);
+      infoWindow.open(map,anchor);
+    });
+  });
+
+}
+
+$('.btn').on('click', function(e){
+  e.preventDefault();
+  setMapStyle( $(this).data('maptype'), parseFloat($(this).data('base')) );
+});
+
+</script>
+
+
+</body>
+</html>

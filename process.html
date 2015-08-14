@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <style>
+    #mapDiv { display: block; width: 900px; height: 600px; }
+  </style>
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+  <h1 class="title"></h1>
+  <div id="mapDiv"></div>
+
+<script>
+var map, parksData, timer = 1500;
+var infoWindow = new google.maps.InfoWindow({ content: "" });
+var dataMap = new google.maps.Data();
+var bbox = [121.47033691406249, 24.99974967945576, 121.62689208984374, 25.13254167169848];
+var data = turf.bboxPolygon(bbox);
+var center = turf.center(data);
+
+var styles=[{featureType:"all",elementType:"labels.text.fill",stylers:[{color:"#ffffff"},{weight:"0.20"},{lightness:"28"},{saturation:"23"},{visibility:"off"}]},{featureType:"all",elementType:"labels.text.stroke",stylers:[{color:"#494949"},{lightness:13},{visibility:"off"}]},{featureType:"all",elementType:"labels.icon",stylers:[{visibility:"off"}]},{featureType:"administrative",elementType:"geometry.fill",stylers:[{color:"#000000"}]},{featureType:"administrative",elementType:"geometry.stroke",stylers:[{color:"#144b53"},{lightness:14},{weight:1.4}]},{featureType:"landscape",elementType:"all",stylers:[{color:"#02101b"}]},{featureType:"poi",elementType:"geometry",stylers:[{color:"#0c4152"},{lightness:5}]},{featureType:"road.highway",elementType:"geometry.fill",stylers:[{color:"#000000"}]},{featureType:"road.highway",elementType:"geometry.stroke",stylers:[{color:"#0b434f"},{lightness:25}]},{featureType:"road.arterial",elementType:"geometry.fill",stylers:[{color:"#000000"}]},{featureType:"road.arterial",elementType:"geometry.stroke",stylers:[{color:"#0b3d51"},{lightness:16}]},{featureType:"road.local",elementType:"geometry",stylers:[{color:"#000000"}]},{featureType:"transit",elementType:"all",stylers:[{color:"#146474"}]},{featureType:"water",elementType:"all",stylers:[{color:"#021019"}]}];
+
+function initMap() {
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(center.geometry.coordinates[1], center.geometry.coordinates[0]),
+      zoom: 14,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      // styles: styles
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+  setMapStyle();
+
+  google.maps.event.addListenerOnce(map, "idle", function() {
+    $.get('parking.json', function(data){
+      parksData = data;
+      var jsonList = createList();
+
+      // auto-load per 3 seconds.
+      for (var i = 0; i < jsonList.length; i++) {
+        (function(i){
+          window.setTimeout(function(){
+
+            $.get('jsons/' + jsonList[i] + '.json', function(data){
+              $('.title').text(jsonList[i]);
+              var geoJson = convertGeoJson(data.result.results);
+              // var grid = turf.aggregate(hexgrid, geoJson, aggregations);
+              infoWindow.close();
+              dataMap.setMap(null);
+              dataMap = new google.maps.Data();
+              setMapStyle();
+
+              dataMap.addGeoJson(geoJson);
+              dataMap.setMap(map);
+            });
+
+          }, timer * i);
+        })(i);
+      }
+
+    });  // $.get('parking.json', function(data){
+
+  });
+}
+
+function setMapStyle(){
+
+  dataMap.addListener('click', function(e) {
+    if( e.feature.getProperty('used') ){
+      infoWindow.setContent('<div>' + e.feature.getProperty('name') + '</div>');
+    }
+    var anchor = new google.maps.MVCObject();
+    anchor.set("position", e.latLng);
+    infoWindow.open(map,anchor);
+  });
+
+  dataMap.setStyle(function(feature) {
+    if( feature.getProperty('used') ){
+      //console.log( feature.getProperty('used') );
+      return  {
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: '#A91D1C',
+          fillOpacity: feature.getProperty('used'),
+          strokeColor: '#F5C13D',
+          strokeOpacity: feature.getProperty('used'), //(parseInt( feature.getProperty('availableCar'), 10) > 50) ? 0.75 : 0.3,
+          scale: (feature.getProperty('used') / 20  > 20) ? 20 : feature.getProperty('used') / 20
+        }
+      };
+    }else{
+      return { visible: false };
+    }
+  });
+}
+
+function createList(){
+  var hr = [], min = ["00", "15", "30", "45"], listArr = [];
+
+  for (var i = 10; i <= 19; i++) { hr.push( i+'' ); }
+  for (var i = 0; i < hr.length; i++) {
+    for (var j = 0; j < min.length; j++) {
+      if( hr[i] === "19" && min[j] === '45' ) { break; }
+      listArr.push('20150813-' + hr[i] + min[j]);
+    }
+  }
+  return listArr;
+}
+
+
+function convertGeoJson(json){
+  var geoJson, features = [];
+
+  // convert to geojson
+  for (var i = 0; i < json.length; i++) {
+    // parksData
+    for (var j = 0; j < parksData.length; j++) {
+      if( json[i].id === parksData[j].id ){
+        var totalCar = parseInt(parksData[j].totalCar, 10),
+            availableCar = parseInt(json[i].availableCar, 10);
+
+        features.push(
+        turf.point([ parksData[j].coords[1], parksData[j].coords[0] ],
+          {
+            totalCar: totalCar,
+            availableCar: availableCar,
+            used: (totalCar-availableCar < 0) ? 0 : (totalCar-availableCar),
+            name: parksData[j].name
+          }));
+        break;
+      }
+    }
+  }
+
+  geoJson = turf.featurecollection(features);
+  return geoJson;
+}
+
+</script>
+
+</body>
+</html>

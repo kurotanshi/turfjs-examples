@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turf - center</title>
+  <style>
+    #mapDiv { width: 800px; height: 440px; }
+    .map-box{ padding: 10px; }
+  </style>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+  <div id="mapDiv"></div>
+
+
+<script>
+var map, infoWindow = new google.maps.InfoWindow({ content: "" });
+
+function initMap() {
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(25.07824, 121.54876),
+      zoom: 11,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  map.data.loadGeoJson('taipei.json', {}, function(features){});
+
+  map.data.addListener('mouseover', function(e) {
+    if( e.feature.getProperty('PTNAME') ){
+      map.data.setStyle(function(feature){
+        if( e.feature.getProperty('PTNAME') === feature.getProperty('PTNAME') ){
+          return { fillOpacity: 0.55, fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 };
+        }
+      });
+    }
+  });
+
+  map.data.addListener('mouseout', function(e) { map.data.revertStyle(); });
+
+  map.data.addListener('click', function(e) {
+    var anchor = new google.maps.MVCObject();
+    anchor.set("position", e.latLng);
+
+    if( e.feature.getProperty('AREA') ){
+      e.feature.toGeoJson(function(data){
+        var center = turf.center(data);
+        map.data.addGeoJson(center);
+      });
+    }
+  });
+
+}
+
+</script>
+
+
+</body>
+</html>

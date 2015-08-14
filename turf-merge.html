@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turf - merge</title>
+  <style>
+    #mapDiv { width: 980px; height: 600px; }
+    button{ font-size: 22px; margin-bottom: 5px; }
+    .map-box{ padding: 10px; }
+  </style>
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+  <button>merge</button>
+  <div id="mapDiv"></div>
+
+<script>
+var map, marker;
+var dataMap = new google.maps.Data();
+
+var poly1 = {
+  "type": "Feature",
+  "properties": {
+    "fillColor": "#0f0"
+  },
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [ 121.52767181396483, 25.08233399434053 ],
+        [ 121.50690078735352, 25.041904178378704 ],
+        [ 121.52681350708008, 25.057144675491212 ],
+        [ 121.53968811035156, 25.039726809855434 ],
+        [ 121.52767181396483, 25.08233399434053 ]
+      ]
+    ]
+  }
+};
+
+var poly2 = {
+  "type": "Feature",
+  "properties": {
+    "fillColor": "#f00"
+  },
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [ 121.49574279785156, 25.053567994285746 ],
+        [ 121.49574279785156, 25.070672916651105 ],
+        [ 121.56320571899413, 25.070672916651105 ],
+        [ 121.56320571899413, 25.053567994285746 ],
+        [ 121.49574279785156, 25.053567994285746 ]
+      ]
+    ]
+  }
+};
+
+
+$('button').on('click', function(){
+  dataMap.setMap(null);
+  dataMap = new google.maps.Data();
+
+  var newPoly = { "type": "FeatureCollection", "features": [poly1, poly2] };
+  var merge = turf.merge(newPoly);
+
+  dataMap.addGeoJson( merge );
+  dataMap.setMap(map);
+});
+
+
+var point = turf.center( { "type": "FeatureCollection", "features": [poly1, poly2] } );
+
+function initMap() {
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(point.geometry.coordinates[1], point.geometry.coordinates[0]),
+      zoom: 14,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  dataMap.addGeoJson(poly1);
+  dataMap.addGeoJson(poly2);
+
+  dataMap.setStyle(function(feature){
+    if( feature.getProperty('fillColor') ){
+      return { fillColor: feature.getProperty('fillColor'), fillOpacity: 0.35 }
+    }
+  });
+
+  dataMap.setMap(map);
+}
+
+
+</script>
+
+
+</body>
+</html>

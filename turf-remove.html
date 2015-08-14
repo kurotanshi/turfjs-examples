@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Turf - remove</title>
+  <style>
+    html, body{ font-size: 16px; }
+    .filter-btn{ font-size: 150%; margin-bottom: 0.5em; }
+    #mapDiv { width: 600px; height: 600px; }
+    .map-box{ padding: 10px; }
+  </style>
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script src="//maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+
+  <button class="filter-btn">Remove</button>
+  <div id="mapDiv"></div>
+
+<script>
+var map, points1, infoWindow = new google.maps.InfoWindow({ content: "" }), dataMap = new google.maps.Data();
+google.maps.InfoWindow.prototype.isOpen = function(){
+  var map = this.getMap();
+  return (map !== null && typeof map !== "undefined");
+}
+
+$('.filter-btn').on('click', function(e){
+  e.preventDefault();
+  var key = "point";
+  var value = "甲";
+  var filtered = turf.remove(points1, key, value);
+  // clear
+  dataMap.setMap(null);
+
+  // add new data
+  dataMap = new google.maps.Data();
+  dataMap.addGeoJson(filtered);
+  dataMap.setMap(map);
+  dataMap.setStyle(function(feature) {
+    if( feature.getProperty('point') ){
+      return { icon: new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_spin&chld=1|0|"+ feature.getProperty('color') +"|15|b|" + feature.getProperty('point')) };
+    }
+  });
+
+});
+
+function initMap() {
+  // points1
+  points1 = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[121.5256694381271,25.053577650613306]},"properties":{"color":"90EE90","point":"甲"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.52636817270518,25.055905427214785]},"properties":{"color":"87CEFA","point":"乙"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.52112800737866,25.057645373121463]},"properties":{"color":"FFE4E1","point":"丙"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.52063982334899,25.05593656466616]},"properties":{"color":"FFA500","point":"丁"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.52822524704958,25.05430817578928]},"properties":{"color":"90EE90","point":"甲"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.51697150268838,25.06313056418346]},"properties":{"color":"87CEFA","point":"乙"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.52407207884563,25.052244590956573]},"properties":{"color":"FFE4E1","point":"丙"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.51730836376227,25.057391228528445]},"properties":{"color":"FFA500","point":"丁"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.52040727358757,25.05383479238944]},"properties":{"color":"90EE90","point":"甲"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[121.52038840696568,25.064035836338217]},"properties":{"color":"87CEFA","point":"乙"}}]};
+
+
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(25.06024, 121.52276),
+      zoom: 15,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  // 載入 GeoJSON 資料
+  dataMap.addGeoJson(points1);
+  dataMap.setMap(map);
+
+  dataMap.setStyle(function(feature) {
+    if( feature.getProperty('point') ){
+      return { icon: new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_spin&chld=1|0|"+ feature.getProperty('color') +"|15|b|" + feature.getProperty('point')) };
+    }
+  });
+}
+</script>
+
+
+</body>
+</html>
