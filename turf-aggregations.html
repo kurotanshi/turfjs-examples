@@ -99,8 +99,6 @@ function initMap() {
   var aggregated = turf.aggregate(polygons, points1, aggregations);
   var result = turf.featurecollection(points1.features.concat(aggregated.features));
 
-  console.log( result );
-
   map.data.addGeoJson(result);
   map.data.addListener('click', function(e) {
 

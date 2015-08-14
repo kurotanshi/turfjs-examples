@@ -13,7 +13,6 @@
 <body onload="initMap()">
   <div id="mapDiv"></div>
 
-
 <script>
 var map;
 
@@ -22,7 +21,7 @@ function initMap() {
   var bbox = [121.51083, 25.05127, 121.5441, 25.06838];
   var data = turf.bboxPolygon(bbox);
   var center = turf.center(data);
-  var hexgrid = turf.hexGrid(bbox, 0.25, 'kilometers');
+  var hexgrid = turf.hexGrid(bbox, 0.1, 'kilometers');
 
   // 地圖初始設定
   var mapOptions = {
