@@ -17,8 +17,8 @@
   <button class="btn" data-base="0.02" data-maptype="pop_sum">Sum</button>
   <button class="btn" data-base="0.1" data-maptype="point_count">Count</button>
   <button class="btn" data-base="0.1" data-maptype="pop_avg">Average</button>
-  <button class="btn" data-base="0.09" data-maptype="pop_max">Max</button>
-  <button class="btn" data-base="0.4" data-maptype="pop_min">Min</button>
+  <button class="btn" data-base="0.075" data-maptype="pop_max">Max</button>
+  <button class="btn" data-base="0.08" data-maptype="pop_min">Min</button>
   <button class="btn" data-base="" data-maptype="">Reset</button>
 
   <div id="mapDiv"></div>
@@ -40,10 +40,12 @@ function setMapStyle(v, base){
     if( feature.getProperty('point') ){ return { icon: new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_spin&chld=0.7|0|80D29B|11|b|" + feature.getProperty('point')) }; }
     // areas
     if( v === '' ){
-      if( feature.getProperty('AREA')){ return { fillOpacity: 0.15, fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 }; }
+      if( feature.getProperty('AREA')){
+        return { fillOpacity: 0.15, fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 };
+      }
     }else{
       if( feature.getProperty('AREA') ){
-        return { fillOpacity: base * feature.getProperty(v), fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 };
+        return { fillOpacity: (base * feature.getProperty(v) > 1) ? 1 : base * feature.getProperty(v), fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 };
       }
     }
   });

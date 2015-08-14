@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <style>
+    .gmap{ display: block; width: 980px; height: 600px; }
+    p{ display: block; margin-bottom: 5px; }
+    button{ font-size: 20px; margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <p>
+    <button data-grid="hexGrid">Hex</button>
+    <button data-grid="squareGrid">Square</button>
+    <button data-grid="triangleGrid">Triangle</button>
+    <button data-grid="pointGrid">Point</button>
+  </p>
+  <div class="gmap" id="map-canvas"></div>
+
+  <script src="http://maps.googleapis.com/maps/api/js?libraries=geometry,visualization,places"></script>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+
+
+<script>
+var styles=[{featureType:"all",elementType:"labels.text.fill",stylers:[{color:"#ffffff"},{weight:"0.20"},{lightness:"28"},{saturation:"23"},{visibility:"off"}]},{featureType:"all",elementType:"labels.text.stroke",stylers:[{color:"#494949"},{lightness:13},{visibility:"off"}]},{featureType:"all",elementType:"labels.icon",stylers:[{visibility:"off"}]},{featureType:"administrative",elementType:"geometry.fill",stylers:[{color:"#000000"}]},{featureType:"administrative",elementType:"geometry.stroke",stylers:[{color:"#144b53"},{lightness:14},{weight:1.4}]},{featureType:"landscape",elementType:"all",stylers:[{color:"#02101b"}]},{featureType:"poi",elementType:"geometry",stylers:[{color:"#0c4152"},{lightness:5}]},{featureType:"road.highway",elementType:"geometry.fill",stylers:[{color:"#000000"}]},{featureType:"road.highway",elementType:"geometry.stroke",stylers:[{color:"#0b434f"},{lightness:25}]},{featureType:"road.arterial",elementType:"geometry.fill",stylers:[{color:"#000000"}]},{featureType:"road.arterial",elementType:"geometry.stroke",stylers:[{color:"#0b3d51"},{lightness:16}]},{featureType:"road.local",elementType:"geometry",stylers:[{color:"#000000"}]},{featureType:"transit",elementType:"all",stylers:[{color:"#146474"}]},{featureType:"water",elementType:"all",stylers:[{color:"#021019"}]}];
+
+var map, geoJson = { "type": "FeatureCollection", "features": [] };
+var infoWindow = new google.maps.InfoWindow({ content: "", pixelOffset: new google.maps.Size(0, -20) });
+var dataMap = new google.maps.Data();
+var result;
+var cellWidth = 0.5;
+var aggregations = [{ aggregation: 'count', inField: 'valueCount', outField: 'area_count' }];
+
+$('button').on('click', function(e){
+  e.preventDefault();
+  draw(result, $(this).data('grid'));
+  window.setTimeout(function(){ google.maps.event.trigger(map, 'idle'); }, 10);
+});
+
+d3.json('parking.json', function(data){
+  result = data;
+  initialize();
+  draw(result, 'hexGrid');
+});
+
+function initialize() {
+  var mapOptions = { zoom: 13, center: new google.maps.LatLng(25.06326, 121.55168), styles: styles };
+  map = new google.maps.Map($('#map-canvas')[0] , mapOptions);
+}
+
+function draw(data, gridType){
+  var features = [];
+  gridType = gridType || 'hexGrid';
+
+  // convert to geojson
+  for (var i = 0; i < data.length; i++) {
+    features.push(
+      turf.point([data[i].coords[1], data[i].coords[0]], { valueCount: data[i].availableCar || 1, name: data[i].name })
+    );
+  }
+
+  geoJson = turf.featurecollection(features);
+
+  google.maps.event.addListenerOnce(map, "idle", function() {
+    bounds = map.getBounds();
+    var ne = bounds.getNorthEast();
+    var sw = bounds.getSouthWest();
+    var minX = sw.lng() + 0.001, maxX = ne.lng() - 0.001;
+    var minY = sw.lat() + 0.001, maxY = ne.lat() - 0.001;
+    var bbox = [minX, minY, maxX, maxY];
+    var units = 'kilometers';
+    var xGrid;
+    var pointGrid;
+
+    dataMap.setMap(null);
+    dataMap = new google.maps.Data();
+
+    if( gridType === 'hexGrid' ){
+      xGrid = turf.hexGrid(bbox, cellWidth, units);
+    }else if( gridType === 'squareGrid' ){
+      xGrid = turf.squareGrid(bbox, cellWidth, units);
+    }else if( gridType === 'triangleGrid' ){
+      xGrid = turf.triangleGrid(bbox, cellWidth, units);
+    }else{
+      // only for point
+      var pointBox = turf.squareGrid(bbox, cellWidth, units);
+      var grid = turf.aggregate(pointBox, geoJson, aggregations);
+      pointGrid = { type: "FeatureCollection", features: [] };
+
+      for (var i = 0; i < pointBox.features.length; i++) {
+        pointGrid.features.push( turf.center(pointBox.features[i]) );
+        pointGrid.features[i].properties.area_count = grid.features[i].properties.area_count;
+      }
+
+      dataMap.addGeoJson( pointGrid );
+
+      // set dot style
+      dataMap.setStyle(function(feature) {
+        if( !feature.getProperty('area_count') ){ return { visible: false }; }
+        else{
+          return {
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: '#A91D1C',
+              fillOpacity: feature.getProperty('area_count') * 0.08,
+              strokeColor: '#F5C13D',
+              strokeOpacity: (parseInt( feature.getProperty('area_count'), 10) > 20) ? 0.75 : 0.3,
+              scale: parseInt( feature.getProperty('area_count'), 10) * 1.15
+            }
+          }
+        }
+      });
+
+    }
+
+    if(!pointGrid){
+      var grid = turf.aggregate(xGrid, geoJson, aggregations);
+      dataMap.addGeoJson( grid );
+      dataMap.addGeoJson( geoJson );
+      hideMarker();
+      dataMap.setMap(map);
+      dataMapInit();
+    }else{
+      dataMap.setMap(map);
+      dataMapInit();
+    }
+
+  });
+}
+
+function dataMapInit(){
+  dataMap.addListener('click', function(e) {
+    var feature_type = e.feature.getGeometry().getType();
+
+    var reformattedArray = aggregations.map(function(obj){
+       var attr = [];
+       attr.push( obj.outField );
+       return attr;
+    });
+
+    reformattedArray = reformattedArray.join().split(',');
+
+    if( feature_type === 'Polygon' || feature_type === 'Point' ){
+      var str = [];
+      for (var i = 0; i < reformattedArray.length; i++) {
+        str.push('<div style="line-height: 200%;"> '+ reformattedArray[i] +' = ' + e.feature.getProperty( reformattedArray[i] ) + "</div>");
+      }
+      infoWindow.setContent( str.join('') );
+    }
+
+    var anchor = new google.maps.MVCObject();
+    anchor.set("position", e.latLng);
+    if( feature_type === 'Polygon' && e.feature.getProperty("area_count") > 0 || feature_type === 'Point'){
+      infoWindow.open(map, anchor);
+    }
+
+  });
+
+  dataMap.addListener('click', function(event) {
+    //show an infowindow on click
+    var anchor = new google.maps.MVCObject();
+    anchor.set("position", event.latLng);
+    infoWindow.open(map, anchor);
+  });
+
+}
+
+function hideMarker(){
+  dataMap.setStyle(function(feature) {
+    // area
+    if( feature.getProperty('area_count')){
+      var n = parseInt(feature.getProperty('area_count'), 10);
+      return { fillOpacity: setColor(n), fillColor: '#A91D1C', strokeWeight: 1, strokeColor: '#F5C13D', strokeOpacity: (setColor(n) > 0.5) ? 0.55 : 0.3 };
+    }
+    else{
+      return { visible: false };
+    }
+  });
+
+}
+
+function showMarker(){
+  dataMap.setStyle(function(feature) {
+    // area
+    if( feature.getProperty('area_count')){
+      var n = parseInt(feature.getProperty('area_count'), 10);
+      return { fillOpacity: setColor(n), fillColor: '#A91D1C', strokeWeight: 1, strokeColor: '#F5C13D', strokeOpacity: (setColor(n) > 0.5) ? 0.55 : 0.3 };
+    }
+    else{
+      return { visible: false };
+    }
+  });
+}
+
+function setColor(n){
+  return ((0.25 + n * 0.075) > 1) ? 1 : (0.25 + n * 0.075);
+}
+</script>
+
+
+</body>
+</html>
