@@ -15,7 +15,7 @@
   <div id="mapDiv"></div>
 
 <script>
-var map, parksData, timer = 1500;
+var map, parksData, timer = 2500;
 var infoWindow = new google.maps.InfoWindow({ content: "" });
 var dataMap = new google.maps.Data();
 var bbox = [121.47033691406249, 24.99974967945576, 121.62689208984374, 25.13254167169848];
@@ -27,8 +27,8 @@ var styles=[{featureType:"all",elementType:"labels.text.fill",stylers:[{color:"#
 function initMap() {
   // 地圖初始設定
   var mapOptions = {
-      center: new google.maps.LatLng(center.geometry.coordinates[1], center.geometry.coordinates[0]),
-      zoom: 14,
+      center: new google.maps.LatLng(25.040667910373205, 121.56516367357992),
+      zoom: 15,
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       // styles: styles
   };
@@ -74,7 +74,7 @@ function setMapStyle(){
 
   dataMap.addListener('click', function(e) {
     if( e.feature.getProperty('used') ){
-      infoWindow.setContent('<div>' + e.feature.getProperty('name') + '</div>');
+      infoWindow.setContent('<div>' + e.feature.getProperty('name') + ' / 已使用: ' + e.feature.getProperty('used') +'</div>');
     }
     var anchor = new google.maps.MVCObject();
     anchor.set("position", e.latLng);
@@ -91,7 +91,7 @@ function setMapStyle(){
           fillOpacity: feature.getProperty('used'),
           strokeColor: '#F5C13D',
           strokeOpacity: feature.getProperty('used'), //(parseInt( feature.getProperty('availableCar'), 10) > 50) ? 0.75 : 0.3,
-          scale: (feature.getProperty('used') / 20  > 20) ? 20 : feature.getProperty('used') / 20
+          scale: (feature.getProperty('used') / 25  > 35) ? 35 : feature.getProperty('used') / 25
         }
       };
     }else{
