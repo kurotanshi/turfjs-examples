@@ -8,9 +8,9 @@
     .map-box{ padding: 6px; font-size: 14px; }
     button{ font-size: 16px; padding: 6px; }
   </style>
-  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
-  <script src="//api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
-  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+  <script src="js/jquery-1.11.3.min.js"></script>
+  <script src="js/turf.min.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
 </head>
 <body onload="initMap()">
 
@@ -18,7 +18,7 @@
   <button class="btn" data-base="0.1" data-maptype="point_count">Count</button>
   <button class="btn" data-base="0.1" data-maptype="pop_avg">Average</button>
   <button class="btn" data-base="0.075" data-maptype="pop_max">Max</button>
-  <button class="btn" data-base="0.08" data-maptype="pop_min">Min</button>
+  <button class="btn" data-base="0.1" data-maptype="pop_min">Min</button>
   <button class="btn" data-base="" data-maptype="">Reset</button>
 
   <div id="mapDiv"></div>
@@ -45,7 +45,14 @@ function setMapStyle(v, base){
       }
     }else{
       if( feature.getProperty('AREA') ){
-        return { fillOpacity: (base * feature.getProperty(v) > 1) ? 1 : base * feature.getProperty(v), fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 };
+        if( v === "pop_min" ){
+          var opa = (1 - base * feature.getProperty(v));
+          return { fillOpacity: opa, fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 };
+
+        }else{
+          return { fillOpacity: (base * feature.getProperty(v) > 1) ? 1 : base * feature.getProperty(v), fillColor: '#2EB0A9', strokeWeight: 2, strokeColor: '#333', strokeOpacity: 1 };
+        }
+
       }
     }
   });
