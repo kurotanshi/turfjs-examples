@@ -83,7 +83,7 @@ function initMap() {
     var isolined = turf.isolines(points1, 'point', 10, breaks);
     var tin = turf.tin(points1, 'point');
     console.log( tin );
-    // map.data.addGeoJson( tin );
+    map.data.addGeoJson( tin );
     // map.data.addGeoJson(isolined);
     map.data.addGeoJson(points1);
 
