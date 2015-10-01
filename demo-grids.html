@@ -4,19 +4,38 @@
   <meta charset="UTF-8">
   <title>Document</title>
   <style>
-    .gmap{ display: block; width: 980px; height: 600px; }
-    p{ display: block; margin-bottom: 5px; }
+    body, html, .map-wapper, .gmap{ height: 100%; width: 100%; }
+    body{ overflow: hidden; }
+    .gmap{
+      display: block; width: 100%; height: 100%;
+    }
+
+    .map-wapper{
+      transition: all 0.5s ease-out;
+      -webkit-transform-style: preserve-3d;
+      -webkit-backface-visibility: hidden;
+      perspective: 300px;
+    }
+    .is-active{
+      transform: perspective(1200px) rotateX(45deg);
+      /*transform: rotateX(55deg);*/
+    }
+    p{ display: block; margin-bottom: 5px; z-index: 15; }
     button{ font-size: 20px; margin-right: 5px; }
   </style>
 </head>
 <body>
   <p>
-    <button data-grid="hexGrid">Hex</button>
-    <button data-grid="squareGrid">Square</button>
-    <button data-grid="triangleGrid">Triangle</button>
-    <button data-grid="pointGrid">Point</button>
+    <button class="grid" data-grid="hexGrid">Hex</button>
+    <button class="grid" data-grid="squareGrid">Square</button>
+    <button class="grid" data-grid="triangleGrid">Triangle</button>
+    <button class="grid" data-grid="pointGrid">Point</button>
+    <button class="turn">?</button>
   </p>
-  <div class="gmap" id="map-canvas"></div>
+
+  <div class="map-wapper">
+    <div class="gmap" id="map-canvas"></div>
+  </div>
 
   <script src="js/d3.v3.min.js"></script>
   <script src="js/jquery-1.11.3.min.js"></script>
@@ -33,7 +52,12 @@ var result;
 var cellWidth = 0.5;
 var aggregations = [{ aggregation: 'count', inField: 'valueCount', outField: 'area_count' }];
 
-$('button').on('click', function(e){
+$('.turn').on('click', function(e){
+  e.preventDefault();
+  $('.map-wapper').toggleClass('is-active');
+});
+
+$('.grid').on('click', function(e){
   e.preventDefault();
   draw(result, $(this).data('grid'));
   window.setTimeout(function(){ google.maps.event.trigger(map, 'idle'); }, 10);
