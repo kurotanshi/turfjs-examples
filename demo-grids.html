@@ -30,7 +30,7 @@
     <button class="grid" data-grid="squareGrid">Square</button>
     <button class="grid" data-grid="triangleGrid">Triangle</button>
     <button class="grid" data-grid="pointGrid">Point</button>
-    <!-- <button class="turn">?</button> -->
+    <button class="turn">?</button>
   </p>
 
   <div class="map-wapper">
@@ -45,6 +45,8 @@
 <script>
 var styles=[{featureType:"all",elementType:"labels.text.fill",stylers:[{color:"#ffffff"},{weight:"0.20"},{lightness:"28"},{saturation:"23"},{visibility:"off"}]},{featureType:"all",elementType:"labels.text.stroke",stylers:[{color:"#494949"},{lightness:13},{visibility:"off"}]},{featureType:"all",elementType:"labels.icon",stylers:[{visibility:"off"}]},{featureType:"administrative",elementType:"geometry.fill",stylers:[{color:"#000000"}]},{featureType:"administrative",elementType:"geometry.stroke",stylers:[{color:"#144b53"},{lightness:14},{weight:1.4}]},{featureType:"landscape",elementType:"all",stylers:[{color:"#02101b"}]},{featureType:"poi",elementType:"geometry",stylers:[{color:"#0c4152"},{lightness:5}]},{featureType:"road.highway",elementType:"geometry.fill",stylers:[{color:"#000000"}]},{featureType:"road.highway",elementType:"geometry.stroke",stylers:[{color:"#0b434f"},{lightness:25}]},{featureType:"road.arterial",elementType:"geometry.fill",stylers:[{color:"#000000"}]},{featureType:"road.arterial",elementType:"geometry.stroke",stylers:[{color:"#0b3d51"},{lightness:16}]},{featureType:"road.local",elementType:"geometry",stylers:[{color:"#000000"}]},{featureType:"transit",elementType:"all",stylers:[{color:"#146474"}]},{featureType:"water",elementType:"all",stylers:[{color:"#021019"}]}];
 
+var styles2=[];
+
 var map, geoJson = { "type": "FeatureCollection", "features": [] };
 var infoWindow = new google.maps.InfoWindow({ content: "", pixelOffset: new google.maps.Size(0, -20) });
 var dataMap = new google.maps.Data();
@@ -54,8 +56,11 @@ var aggregations = [{ aggregation: 'count', inField: 'valueCount', outField: 'ar
 
 $('.turn').on('click', function(e){
   e.preventDefault();
-  $('.map-wapper').toggleClass('is-active');
+  showMarker();
+  // $('.map-wapper').toggleClass('is-active');
 });
+
+
 
 $('.grid').on('click', function(e){
   e.preventDefault();
@@ -211,6 +216,9 @@ function showMarker(){
     if( feature.getProperty('area_count')){
       var n = parseInt(feature.getProperty('area_count'), 10);
       return { fillOpacity: setColor(n), fillColor: '#A91D1C', strokeWeight: 1, strokeColor: '#F5C13D', strokeOpacity: (setColor(n) > 0.5) ? 0.55 : 0.3 };
+    }
+    else if( feature.getProperty('valueCount') ){
+      return { icon: 'https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=car|FFaa00' };
     }
     else{
       return { visible: false };

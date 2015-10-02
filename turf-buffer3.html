@@ -10,11 +10,11 @@
   </style>
   <script src="js/jquery-1.11.3.min.js"></script>
   <script src="js/turf.min.js"></script>
-  <script src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+  <script src="https://maps.googleapis.com/maps/api/js"></script>
 </head>
 <body onload="initMap()">
   <p>
-    <input type="range" id="range" min="50" max="2000" step="50" value="50" /> <span class="range-text">50 m</span>
+    <input type="range" id="range" min="0" max="2000" step="50" value="0" /> <span class="range-text">0 m</span>
   </p>
   <div id="mapDiv"></div>
 
@@ -25,7 +25,13 @@ var setStyle = function(){
   dataMap.setStyle(function(feature){
     if( feature.getProperty('name') ){
       return { icon: new google.maps.MarkerImage("https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=train|FFFF88") };
-    }else{ return {}; }
+    }
+    else if( feature.getProperty('line') ){
+      return { strokeWeight: 8, strokeColor: '#00f' };
+    }
+    else{
+      return { strokeWeight: 1, strokeColor: '#00f', fillOpacity: 0.25, fillColor: '#F5C13D' };
+    }
   });
 };
 
@@ -51,12 +57,12 @@ function initMap() {
     pointArr.push(turf.point([point[i].longitude, point[i].latitude], { name: point[i].name }));
     lineArr.push([point[i].longitude, point[i].latitude]);
   }
-  var linestring = turf.linestring(lineArr);
-  buffered = turf.buffer(linestring, 0.05, "kilometers");
+  var linestring = turf.linestring(lineArr, {line: '1'});
+  // buffered = turf.buffer(linestring, 0.05, "kilometers");
 
   dataMap.addGeoJson(turf.featurecollection(pointArr));
   dataMap.addGeoJson(linestring);
-  dataMap.addGeoJson(buffered);
+  // dataMap.addGeoJson(buffered);
   setStyle();
   dataMap.setMap(map);
 
@@ -66,12 +72,15 @@ function initMap() {
 
     dataMap.setMap(null);
     dataMap = new google.maps.Data();
-    buffered = turf.buffer(linestring, meter * 0.001, "kilometers");
     setStyle();
 
     dataMap.addGeoJson(turf.featurecollection(pointArr));
     dataMap.addGeoJson(linestring);
-    dataMap.addGeoJson(buffered);
+    if( meter > 0 ){
+      buffered = turf.buffer(linestring, meter * 0.001, "kilometers");
+      console.log( buffered );
+      dataMap.addGeoJson(buffered);
+    }
     dataMap.setMap(map);
   });
 
