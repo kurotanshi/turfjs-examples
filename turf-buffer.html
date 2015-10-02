@@ -24,7 +24,6 @@ var dataMap = new google.maps.Data();
 var point = turf.point([121.51709318161011, 25.047833423462535]);
 
 // turf.buffer
-// var buffered = turf.buffer(point, 3, "kilometers");
 $('#range').on('change', function(e){
   $('.range-text').text( $(this).val() + ' Km');
   dataMapReload(marker.position, $(this).val());
