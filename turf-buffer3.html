@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <style>
+    #mapDiv { width: 980px; height: 600px; }
+    #range { width: 340px; }
+    .map-box{ padding: 10px; }
+  </style>
+  <script src="js/jquery-1.11.3.min.js"></script>
+  <script src="js/turf.min.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?libraries=drawing"></script>
+</head>
+<body onload="initMap()">
+  <p>
+    <input type="range" id="range" min="50" max="2000" step="50" value="50" /> <span class="range-text">50 m</span>
+  </p>
+  <div id="mapDiv"></div>
+
+<script>
+var map, mrt = [];
+var dataMap = new google.maps.Data();
+var setStyle = function(){
+  dataMap.setStyle(function(feature){
+    if( feature.getProperty('name') ){
+      return { icon: new google.maps.MarkerImage("https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=train|FFFF88") };
+    }else{ return {}; }
+  });
+};
+
+
+function initMap() {
+  // 地圖初始設定
+  var mapOptions = {
+      center: new google.maps.LatLng(25.042750, -238.46620),
+      zoom: 15,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+
+  var mapElement = document.getElementById("mapDiv");
+
+  // Google 地圖初始化
+  map = new google.maps.Map(mapElement, mapOptions);
+
+  var point = [{"id":42,"name":"台北車站","number":"51","address":"10041臺北市中正區忠孝西路1段49號","latitude":25.046374,"longitude":121.517896},{"id":72,"name":"善導寺","number":"88","address":"10049臺北市中正區忠孝東路1段58號B1","latitude":25.044746,"longitude":121.523133},{"id":73,"name":"忠孝新生","number":"89","address":"10652臺北市大安區新生南路1段67號","latitude":25.042023,"longitude":121.533107},{"id":4,"name":"忠孝復興","number":"10","address":"10654臺北市大安區忠孝東路4段47號","latitude":25.0417843,"longitude":121.5448626}];
+
+  var buffered, lineArr = [], pointArr = [];
+
+  for (var i = 0; i < point.length; i++) {
+    pointArr.push(turf.point([point[i].longitude, point[i].latitude], { name: point[i].name }));
+    lineArr.push([point[i].longitude, point[i].latitude]);
+  }
+  var linestring = turf.linestring(lineArr);
+  buffered = turf.buffer(linestring, 0.05, "kilometers");
+
+  dataMap.addGeoJson(turf.featurecollection(pointArr));
+  dataMap.addGeoJson(linestring);
+  dataMap.addGeoJson(buffered);
+  setStyle();
+  dataMap.setMap(map);
+
+  $('#range').on('change', function(e){
+    var meter = parseInt($(this).val(), 10);
+    $('.range-text').text( meter + ' m');
+
+    dataMap.setMap(null);
+    dataMap = new google.maps.Data();
+    buffered = turf.buffer(linestring, meter * 0.001, "kilometers");
+    setStyle();
+
+    dataMap.addGeoJson(turf.featurecollection(pointArr));
+    dataMap.addGeoJson(linestring);
+    dataMap.addGeoJson(buffered);
+    dataMap.setMap(map);
+  });
+
+
+}
+
+
+</script>
+
+
+</body>
+</html>

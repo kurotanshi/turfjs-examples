@@ -2,10 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>高雄氣爆影響範圍示意</title>
+  <title></title>
   <style>
     #mapDiv { width: 980px; height: 600px; }
-    #range { width: 300px; }
+    #range { width: 340px; }
     .map-box{ padding: 10px; }
   </style>
   <script src="js/jquery-1.11.3.min.js"></script>
@@ -14,121 +14,27 @@
 </head>
 <body onload="initMap()">
   <p>
-    <h2>高雄氣爆影響範圍示意</h2>
-    <div>爆炸或崩塌的區域參考: <a href="https://zh.wikipedia.org/zh-tw/2014%E5%B9%B4%E8%87%BA%E7%81%A3%E9%AB%98%E9%9B%84%E6%B0%A3%E7%88%86%E4%BA%8B%E6%95%85" target="_blank">維基百科: 2014年臺灣高雄氣爆事故</a></div>
-  </p>
-  <p>
-    <input type="range" id="range" min="0.5" max="5" step="0.25" value="0.5" /> <span class="range-text">0.5 Km</span>
+    <input type="range" id="range" min="200" max="2000" step="100" value="200" /> <span class="range-text">200 m</span>
   </p>
   <div id="mapDiv"></div>
 
 <script>
-var map, marker;
+var map, mrtGeo;
 var dataMap = new google.maps.Data();
-
-var points = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -239.67114686965942,
-          22.62189420261141
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -239.67745542526245,
-          22.612366806763518
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -239.67320680618283,
-          22.61191121828706
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -239.6821117401123,
-          22.608107986050182
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -239.6752667427063,
-          22.605077210092677
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -239.68421459197998,
-          22.60565167602243
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {},
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -239.69099521636963,
-          22.60442350456582
-        ]
-      }
-    }
-  ]
+var setStyle = function(){
+  dataMap.setStyle(function(feature){
+    if( feature.getProperty('name') ){
+      return { icon: new google.maps.MarkerImage("https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=train|FFFF88") };
+    }else{ return {}; }
+  });
 };
 
-var point = turf.center(points);
-// turf.buffer
-var buffered = turf.buffer(points, 0.5, "kilometers");
-
-$('#range').on('change', function(e){
-  $('.range-text').text( $(this).val() + ' Km');
-  buffered = turf.buffer(points, $(this).val(), "kilometers");
-
-  dataMap.setMap(null);
-  dataMap = new google.maps.Data();
-  dataMap.addGeoJson(points);
-  dataMap.addGeoJson(buffered);
-  dataMap.setMap(map);
-});
 
 function initMap() {
   // 地圖初始設定
   var mapOptions = {
-      center: new google.maps.LatLng(point.geometry.coordinates[1], point.geometry.coordinates[0]),
-      zoom: 15,
+      center: new google.maps.LatLng(25.047502948494675, -238.44572067260742),
+      zoom: 14,
       mapTypeId: google.maps.MapTypeId.ROADMAP
   };
 
@@ -137,9 +43,39 @@ function initMap() {
   // Google 地圖初始化
   map = new google.maps.Map(mapElement, mapOptions);
 
-  dataMap.addGeoJson(points);
-  dataMap.addGeoJson(buffered);
-  dataMap.setMap(map);
+  $.get('data/mrt.json', function(data){
+    var point, buffered;
+
+    for (var i = 0; i < data.length; i++) {
+      point = turf.point([ data[i].longitude, data[i].latitude ], { name: data[i].name });
+      buffered = turf.buffer(point, 0.2, "kilometers");
+      dataMap.addGeoJson(point);
+      dataMap.addGeoJson(buffered);
+    }
+
+    setStyle();
+    dataMap.setMap(map);
+
+
+    $('#range').on('change', function(e){
+      var meter = parseInt($(this).val(), 10);
+      $('.range-text').text( meter + ' m');
+
+      dataMap.setMap(null);
+      dataMap = new google.maps.Data();
+      setStyle();
+
+      for (var i = 0; i < data.length; i++) {
+        point = turf.point([ data[i].longitude, data[i].latitude ], { name: data[i].name });
+        buffered = turf.buffer(point, meter * 0.001, "kilometers");
+        dataMap.addGeoJson(point);
+        dataMap.addGeoJson(buffered);
+      }
+      dataMap.setMap(map);
+    });
+
+  });
+
 }
 
 
