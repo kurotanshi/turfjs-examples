@@ -21,14 +21,14 @@
 var map, infoWindow = new google.maps.InfoWindow({ content: "" });
 var dataMap = new google.maps.Data();
 var turfPoint = turf.point([121.611764431, 25.041092529]);
-var circle = turf.buffer(turfPoint, 1, "kilometers");
+var circle = turf.buffer(turfPoint, 2, "kilometers");
 var ubikePin;
 
 function initMap() {
   // 地圖初始設定
   var mapOptions = {
       center: new google.maps.LatLng(25.041092529, 121.611764431),
-      zoom: 15,
+      zoom: 14,
       mapTypeId: google.maps.MapTypeId.ROADMAP
   };
 
