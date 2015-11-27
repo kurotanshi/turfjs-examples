@@ -95,7 +95,7 @@ function initMap() {
     map.panTo(e.latLng);
 
     var pt = turf.point([e.latLng.lng(), e.latLng.lat()]);
-    var c = turf.buffer(pt, 1, "kilometers");
+    var c = turf.buffer(pt, 2, "kilometers");
     draw(ubikePin, c, e.latLng);
   });
 
