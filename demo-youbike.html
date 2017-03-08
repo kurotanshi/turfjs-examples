@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>demo - youbike</title>
   <style>
-    #mapDiv { width: 900px; height: 600px; }
+    #mapDiv { width: 100%; height: 680px; margin: 0 auto; }
     .map-box{ font-size: 14px; margin-bottom: 3px; }
     input.along{ width: 50px; }
   </style>
@@ -13,6 +13,7 @@
   <script src="js/turf.min.js"></script>
   <script src="//maps.googleapis.com/maps/api/js?key=AIzaSyBxKtiOh3lYNzXBI6jjjC_oOGaqF1Z6Uy0&libraries=drawing"></script>
 </head>
+
 <body onload="initMap()">
 
   <div id="mapDiv"></div>
@@ -20,15 +21,17 @@
 <script>
 var map, infoWindow = new google.maps.InfoWindow({ content: "" });
 var dataMap = new google.maps.Data();
-var turfPoint = turf.point([121.611764431, 25.041092529]);
-var circle = turf.buffer(turfPoint, 2, "kilometers");
-var ubikePin;
+var defaultPosition = { lat: 25.041092529, lng: 121.611764431 };
+var turfPoint = turf.point([defaultPosition.lng, defaultPosition.lat]);
+var circle = turf.buffer(turfPoint, 1, "kilometers");
+var ubikePin = [];
 
 function initMap() {
+
   // 地圖初始設定
   var mapOptions = {
-      center: new google.maps.LatLng(25.041092529, 121.611764431),
-      zoom: 14,
+      center: new google.maps.LatLng( defaultPosition.lat, defaultPosition.lng ),
+      zoom: 15,
       mapTypeId: google.maps.MapTypeId.ROADMAP
   };
 
@@ -49,15 +52,23 @@ function initMap() {
       if( e.feature.getProperty('id') ){
         var anchor = new google.maps.MVCObject();
         anchor.set("position", e.latLng);
-        var str = [];
-        str.push('<div class="map-box">' + e.feature.getProperty('addr') + "</div>");
-        str.push('<div class="map-box">距離約 ' +
-          turf.distance(turf.point([e.latLng.lng(), e.latLng.lat()]), turf.point([pos.lng(), pos.lat()]), 'kilometers') * 1000 +
-          " 公尺</div>");
+
+        var str = [],
+            distance = (turf.distance(turf.point([e.latLng.lng(), e.latLng.lat()]),
+                                      turf.point([pos.lng(), pos.lat()]), 'kilometers') * 1000).toFixed(2);
+
+        str.push(e.feature.getProperty('sna'));
+        str.push(e.feature.getProperty('addr'));
+        str.push('可借/總數量: ' + e.feature.getProperty('available') + ' / ' + e.feature.getProperty('total'));
+        str.push('距離約 ' + distance + " 公尺</div>");
+        str.push('最後更新時間: ' + e.feature.getProperty('update'));
+
+        str = str.map( (d) => '<div class="map-box">' + d + '</div>');
 
         infoWindow.setContent(str.join(''));
         infoWindow.open(map, anchor);
-      }else{
+      }
+      else{
         infoWindow.close();
       }
 
@@ -65,8 +76,15 @@ function initMap() {
 
     if( ubikePin ){
       dataMap.setStyle(function(feature){
+
+        var available = parseInt(feature.getProperty('available'), 10);
+
         if( feature.getProperty('inner') ){
+          if( available > 20 ){
+            return { icon: new google.maps.MarkerImage("https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=bicycle|00FF00") };
+          }
           return { icon: new google.maps.MarkerImage("https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=bicycle|FFFF88") };
+
         }
         else if( feature.getProperty('id') ){
           return { icon: new google.maps.MarkerImage("https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=bicycle|CCCCCC") };
@@ -74,10 +92,24 @@ function initMap() {
       });
 
       for (var i = 0; i < ubikePin.length; i++) {
-        pt = turf.point([ parseFloat(ubikePin[i].lng), parseFloat(ubikePin[i].lat)],
-            { id: ubikePin[i]._id, addr: ubikePin[i].ar, sna: ubikePin[i].sna });
+
+        pt = turf.point([parseFloat(ubikePin[i].lng), parseFloat(ubikePin[i].lat)],
+            {
+                id: ubikePin[i].sno,
+               sna: ubikePin[i].sna,
+              addr: ubikePin[i].ar,
+              mday: ubikePin[i].mday,
+              total: ubikePin[i].tot,
+              available: ubikePin[i].bemp,
+              update: (function(d){
+                var s = d.split(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/);
+                var t = new Date(s[1],s[2],s[3],s[4],s[5],s[6]);
+                return t.toLocaleDateString() + ' ' + t.toLocaleTimeString();
+              })( ubikePin[i].mday )
+            });
 
         if( turf.inside(pt, newCircle.features[0]) ){ pt.properties.inner = "ture"; }
+
         dataMap.addGeoJson( pt );
       }
     }
@@ -86,28 +118,40 @@ function initMap() {
   map = new google.maps.Map(mapElement, mapOptions);
 
   marker = new google.maps.Marker({
-    position: new google.maps.LatLng(25.041092529, 121.611764431),
+    position: new google.maps.LatLng( defaultPosition.lat, defaultPosition.lng ),
     map: map,
     draggable: true
   });
 
   google.maps.event.addListener(marker, 'dragend', function(e) {
     map.panTo(e.latLng);
-
     var pt = turf.point([e.latLng.lng(), e.latLng.lat()]);
-    var c = turf.buffer(pt, 2, "kilometers");
+    var c = turf.buffer(pt, 1, "kilometers");
     draw(ubikePin, c, e.latLng);
   });
 
-  $.get("youbike.json", function(data){
-    var pts = [], pt;
-    ubikePin = data.result.results;
-    draw(ubikePin);
+  navigator.geolocation.getCurrentPosition((position) => {
+    var lat  = position.coords.latitude;
+    var lng = position.coords.longitude;
+
+    var center = new google.maps.LatLng(lat, lng);
+    var pt = turf.point([lng, lat]);
+    var c = turf.buffer(pt, 1, "kilometers");
+
+    marker.setPosition(center);
+    map.panTo( center );
+
+    draw(ubikePin, c, center);
+  });
+
+  // opendata
+  $.get('https://tcgbusfs.blob.core.windows.net/blobyoubike/YouBikeTP.gz', function(data){
+    data = JSON.parse( data );
+    ubikePin = Object.keys(data.retVal).map(key => data.retVal[key]);
+
+    draw( ubikePin );
   });
 }
-
-
-
 </script>
 
 </body>
