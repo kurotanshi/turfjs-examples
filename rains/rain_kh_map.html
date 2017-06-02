@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>高雄市一日降雨 300/450/600 (mm) 淹水潛勢圖</title>
+  <meta property="og:title" content="高雄市一日降雨 300/450/600 (mm) 淹水潛勢圖" />
+  <meta property="og:image" content="http://kurotanshi.github.io/TPEDisasterSummary/rain/kh-image.png" />
+  <meta property="og:url" content="http://kurotanshi.github.io/TPEDisasterSummary/rain/rain_kh_map.html" />
+  <style>
+    #mapDiv {
+      display: block;
+      width: 1000px;
+      height: 600px;
+    }
+    
+    h1,
+    p {
+      margin: 0.5em 0;
+    }
+    
+    .block {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 5px;
+    }
+    
+    .deep {
+      display: inline-block;
+      margin-right: 1em;
+      margin-left: 5px;
+    }
+  </style>
+  <script src="js/d3.v3.min.js"></script>
+  <script src="js/jquery-1.11.3.min.js"></script>
+  <script src="js/togeojson.js"></script>
+  <script src="//maps.googleapis.com/maps/api/js?key=AIzaSyBxKtiOh3lYNzXBI6jjjC_oOGaqF1Z6Uy0&libraries=drawing"></script>
+</head>
+
+<body onload="initMap()">
+  <h1>高雄市一日降雨 300/450/600 (mm) 淹水潛勢圖</h1>
+  <p>資料來源: <a target="_blank" href="http://www.dprc.ncku.edu.tw/download/index2.html">水利署水災災情蒐集服務網</a></p>
+  <p>
+    <label><input class="default" type="radio" name="rain" value="300" checked>300 mm/單日 </label>
+    <label><input type="radio" name="rain" value="450">450 mm/單日 </label>
+    <label><input type="radio" name="rain" value="600">600 mm/單日 </label> 降雨條件下之可能淹水範圍及深度
+  </p>
+
+  <p>
+    淹水深度(m):
+    <span class="deep"><i class="block" style="background-color:#f5f500"></i> 0.001 ~ 0.5</span>
+    <span class="deep"><i class="block" style="background-color:#f5b800"></i> 0.5 ~ 1.0</span>
+    <span class="deep"><i class="block" style="background-color:#f57a00"></i> 1.0 ~ 2.0</span>
+    <span class="deep"><i class="block" style="background-color:#ff0000"></i> 2.0 ~ 3.0</span>
+    <span class="deep"><i class="block" style="background-color:#a80000"></i> > 3.0</span>
+  </p>
+
+  <div id="mapDiv"></div>
+
+
+  <script>
+    function initMap() {
+      var styles = [{
+        featureType: "landscape",
+        elementType: "labels",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        featureType: "transit",
+        elementType: "labels",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        featureType: "poi",
+        elementType: "labels",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        featureType: "water",
+        elementType: "labels",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        featureType: "road",
+        elementType: "labels.icon",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        stylers: [{
+          hue: "#00aaff"
+        }, {
+          saturation: -100
+        }, {
+          gamma: 2.15
+        }, {
+          lightness: 12
+        }]
+      }, {
+        featureType: "road",
+        elementType: "labels.text.fill",
+        stylers: [{
+          visibility: "on"
+        }, {
+          lightness: 24
+        }]
+      }, {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{
+          lightness: 57
+        }]
+      }];
+
+      // 地圖初始設定
+      var mapOptions = {
+        // center: new google.maps.LatLng(25.047502948494675, -238.44572067260742),
+        center: new google.maps.LatLng(22.63105500359549, 120.30998501620354),
+        zoom: 12,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        styles: styles
+      };
+
+      var mapElement = document.getElementById("mapDiv");
+      var dataMap = new google.maps.Data();
+
+      // Google 地圖初始化
+      map = new google.maps.Map(mapElement, mapOptions);
+
+      // reset handler
+      $('input[name="rain"].default').prop('checked', true);
+
+      // 載入 GeoJSON 資料
+      dataMap.loadGeoJson('kh/r300.json');
+      dataMap.setStyle(function(feature) {
+        if (feature.getProperty('CLASS') === 1) {
+          return {
+            fillOpacity: 0.25,
+            fillColor: '#f5f500',
+            strokeWeight: 2,
+            strokeColor: '#f5f500',
+            strokeOpacity: 0.9
+          };
+        }
+        if (feature.getProperty('CLASS') === 2) {
+          return {
+            fillOpacity: 0.25,
+            fillColor: '#f5b800',
+            strokeWeight: 2,
+            strokeColor: '#f5b800',
+            strokeOpacity: 0.9
+          };
+        }
+        if (feature.getProperty('CLASS') === 3) {
+          return {
+            fillOpacity: 0.25,
+            fillColor: '#f57a00',
+            strokeWeight: 2,
+            strokeColor: '#f57a00',
+            strokeOpacity: 0.9
+          };
+        }
+        if (feature.getProperty('CLASS') === 4) {
+          return {
+            fillOpacity: 0.25,
+            fillColor: '#ff0000',
+            strokeWeight: 2,
+            strokeColor: '#ff0000',
+            strokeOpacity: 0.9
+          };
+        }
+        if (feature.getProperty('CLASS') === 5) {
+          return {
+            fillOpacity: 0.25,
+            fillColor: '#a80000',
+            strokeWeight: 2,
+            strokeColor: '#a80000',
+            strokeOpacity: 0.9
+          };
+        }
+      });
+      dataMap.setMap(map);
+
+
+      $('input[name="rain"]').on('change', function() {
+        var v = $(this).val();
+        dataMap.setMap(null);
+        dataMap = new google.maps.Data();
+        dataMap.loadGeoJson('kh/r' + v + '.json');
+        dataMap.setStyle(function(feature) {
+          if (feature.getProperty('CLASS') === 1) {
+            return {
+              fillOpacity: 0.25,
+              fillColor: '#f5f500',
+              strokeWeight: 2,
+              strokeColor: '#f5f500',
+              strokeOpacity: 0.9
+            };
+          }
+          if (feature.getProperty('CLASS') === 2) {
+            return {
+              fillOpacity: 0.25,
+              fillColor: '#f5b800',
+              strokeWeight: 2,
+              strokeColor: '#f5b800',
+              strokeOpacity: 0.9
+            };
+          }
+          if (feature.getProperty('CLASS') === 3) {
+            return {
+              fillOpacity: 0.25,
+              fillColor: '#f57a00',
+              strokeWeight: 2,
+              strokeColor: '#f57a00',
+              strokeOpacity: 0.9
+            };
+          }
+          if (feature.getProperty('CLASS') === 4) {
+            return {
+              fillOpacity: 0.25,
+              fillColor: '#ff0000',
+              strokeWeight: 2,
+              strokeColor: '#ff0000',
+              strokeOpacity: 0.9
+            };
+          }
+          if (feature.getProperty('CLASS') === 5) {
+            return {
+              fillOpacity: 0.25,
+              fillColor: '#a80000',
+              strokeWeight: 2,
+              strokeColor: '#a80000',
+              strokeOpacity: 0.9
+            };
+          }
+        });
+        dataMap.setMap(map);
+      });
+
+
+    }
+  </script>
+
+</body>
+
+</html>

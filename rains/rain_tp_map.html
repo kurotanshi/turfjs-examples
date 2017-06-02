@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>台北市降雨淹水模擬圖</title>
+  <meta property="og:title" content="台北市降雨淹水模擬圖" />
+  <meta property="og:image" content="http://kurotanshi.github.io/TPEDisasterSummary/rain/image.png" />
+  <meta property="og:url" content="http://kurotanshi.github.io/TPEDisasterSummary/rain/rain_tp_map.html" />
+  <style>
+    #mapDiv {
+      display: block;
+      width: 1000px;
+      height: 600px;
+    }
+    
+    h1,
+    p {
+      margin: 0.5em 0;
+    }
+    
+    .block {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 5px;
+    }
+    
+    .deep {
+      display: inline-block;
+      margin-right: 1em;
+      margin-left: 5px;
+    }
+  </style>
+  <script src="js/d3.v3.min.js"></script>
+  <script src="js/jquery-1.11.3.min.js"></script>
+  <script src="js/togeojson.js"></script>
+  <script src="//maps.googleapis.com/maps/api/js?key=AIzaSyBxKtiOh3lYNzXBI6jjjC_oOGaqF1Z6Uy0&libraries=drawing"></script>
+
+</head>
+
+<body onload="initMap()">
+  <h1>台北市降雨淹水模擬圖</h1>
+  <p>資料來源: <a target="_blank" href="http://data.taipei/opendata/datalist/datasetMeta?oid=fa1e8012-ebb4-473b-888e-97f9a9ce365e">臺北市降雨淹水模擬圖</a></p>
+  <p>
+    <label><input class="default" type="radio" name="rain" value="78" checked>78.8 mm/hr </label>
+    <label><input type="radio" name="rain" value="100">100 mm/hr </label>
+    <label><input type="radio" name="rain" value="130">130 mm/hr </label> 降雨條件下之可能淹水範圍及深度
+  </p>
+  <p>
+    淹水深度(m):
+    <span class="deep"><i class="block" style="background-color:#0070FF"></i> < 0.3</span>
+    <span class="deep"><i class="block" style="background-color:#54FF00"></i> 0.3 ~ 1.0</span>
+    <span class="deep"><i class="block" style="background-color:#FFAA00"></i> 1.0 ~ 3.0</span>
+    <span class="deep"><i class="block" style="background-color:#FF0000"></i> > 3.0</span>
+  </p>
+  <div id="mapDiv"></div>
+
+  <!-- <script src="js/script.js"></script> -->
+  <script>
+    function initMap() {
+
+      var styles = [{
+        featureType: "landscape",
+        elementType: "labels",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        featureType: "transit",
+        elementType: "labels",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        featureType: "poi",
+        elementType: "labels",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        featureType: "water",
+        elementType: "labels",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        featureType: "road",
+        elementType: "labels.icon",
+        stylers: [{
+          visibility: "off"
+        }]
+      }, {
+        stylers: [{
+          hue: "#00aaff"
+        }, {
+          saturation: -100
+        }, {
+          gamma: 2.15
+        }, {
+          lightness: 12
+        }]
+      }, {
+        featureType: "road",
+        elementType: "labels.text.fill",
+        stylers: [{
+          visibility: "on"
+        }, {
+          lightness: 24
+        }]
+      }, {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{
+          lightness: 57
+        }]
+      }];
+
+      // 地圖初始設定
+      var mapOptions = {
+        center: new google.maps.LatLng(25.047502948494675, -238.44572067260742),
+        zoom: 12,
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        styles: styles
+      };
+
+      var mapElement = document.getElementById("mapDiv");
+      var dataMap = new google.maps.Data();
+
+      // Google 地圖初始化
+      map = new google.maps.Map(mapElement, mapOptions);
+
+      var geoObj = {},
+        d1 = $.Deferred(),
+        d2 = $.Deferred(),
+        d3 = $.Deferred(),
+        w = $.when(d1, d2, d3);
+
+      w.done(function(geo) {
+        $('input[name="rain"].default').prop('checked', true);
+        dataMap.setMap(null);
+        dataMap = new google.maps.Data();
+        dataMap.addGeoJson(geoObj.d1);
+        dataMap.setMap(map);
+
+        dataMap.setStyle(function(feature) {
+          if (feature.getProperty('name') === '0.3') {
+            return {
+              fillOpacity: 0.35,
+              fillColor: '#0070FF',
+              strokeWeight: 2,
+              strokeColor: '#0070FF',
+              strokeOpacity: 1
+            };
+          }
+          if (feature.getProperty('name') === '0.3~1.0') {
+            return {
+              fillOpacity: 0.35,
+              fillColor: '#54FF00',
+              strokeWeight: 2,
+              strokeColor: '#54FF00',
+              strokeOpacity: 1
+            };
+          }
+        });
+
+        $('input[name="rain"]').on('change', function() {
+          var v = $(this).val();
+          dataMap.setMap(null);
+          dataMap = new google.maps.Data();
+          dataMap.setStyle(function(feature) {
+            if (feature.getProperty('name') === '0.3') {
+              return {
+                fillOpacity: 0.35,
+                fillColor: '#0070FF',
+                strokeWeight: 2,
+                strokeColor: '#0070FF',
+                strokeOpacity: 1
+              };
+            }
+            if (feature.getProperty('name') === '0.3~1.0') {
+              return {
+                fillOpacity: 0.35,
+                fillColor: '#54FF00',
+                strokeWeight: 2,
+                strokeColor: '#54FF00',
+                strokeOpacity: 1
+              };
+            }
+          });
+          if (v === '78') {
+            dataMap.addGeoJson(geoObj.d1);
+          } else if (v === '100') {
+            dataMap.addGeoJson(geoObj.d2);
+          } else {
+            dataMap.addGeoJson(geoObj.d3);
+          }
+          dataMap.setMap(map);
+        });
+      });
+
+      $.get('78mm.kml', function(d) {
+        var geo = toGeoJSON.kml(d);
+        geoObj.d1 = geo;
+        d1.resolve();
+      });
+
+      $.get('100mm.kml', function(d) {
+        var geo = toGeoJSON.kml(d);
+        geoObj.d2 = geo;
+        d2.resolve();
+      });
+
+      $.get('130mm.kml', function(d) {
+        var geo = toGeoJSON.kml(d);
+        geoObj.d3 = geo;
+        d3.resolve();
+      });
+
+    }
+  </script>
+
+</body>
+
+</html>

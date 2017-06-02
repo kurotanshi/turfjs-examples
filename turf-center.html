@@ -31,7 +31,9 @@ function initMap() {
   // Google 地圖初始化
   map = new google.maps.Map(mapElement, mapOptions);
 
-  map.data.loadGeoJson('taipei.json', {}, function(features){});
+  // map.data.loadGeoJson('taipei.json', {}, function(features){});
+  map.data.loadGeoJson('https://s1.hfcdn.com/fp/yc_common/map/taipei.json', {}, function(features){});
+
 
   map.data.addListener('mouseover', function(e) {
     if( e.feature.getProperty('PTNAME') ){
@@ -43,7 +45,10 @@ function initMap() {
     }
   });
 
-  map.data.addListener('mouseout', function(e) { map.data.revertStyle(); });
+
+  map.data.addListener('mouseout', function(e) {
+    map.data.revertStyle();
+  });
 
   map.data.addListener('click', function(e) {
     var anchor = new google.maps.MVCObject();
